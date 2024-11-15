@@ -1,0 +1,27 @@
+#!/bin/bash
+
+while read line
+do
+	ip=$(echo "$line" | awk '{print $1}')
+	hostname=$(echo "$line" | awk '{print $2}')
+	
+	nslookup_output=$(nslookup "$hostname")
+	
+	in_name=false
+	
+	while read nslookup_line
+	do
+		if [[ "$nslookup_line" =~ ^Name: ]]; then
+			in_name=true
+		elif [[ "$nslookup_line" =~ ^Address: && "$in_name" = true ]]; then
+			ip_nslookup=$(echo "$nslookup_line" | awk '{print $2}')
+			in_name=false
+		fi
+	done <<< "$nslookup_output"
+	
+	if [[ "$ip" == "$ip_nslookup" ]]; then
+		echo "Good ip for hostname: $hostname"
+	else
+		echo "Bogus ip for hostname: $hostname, with ip $ip"
+	fi
+done < /etc/hosts
