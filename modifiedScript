@@ -1,0 +1,40 @@
+#!/bin/bash
+
+# Funcție pentru verificarea validității unei adrese IP
+validate_ip() {
+    local hostname="$1"
+    local ip="$2"
+    local dns_server="$3"
+    
+    nslookup_output=$(nslookup "$hostname" "$dns_server")
+    
+    local ip_nslookup=""
+    local in_name=false
+
+    while read nslookup_line; do
+        if [[ "$nslookup_line" =~ ^Name: ]]; then
+            in_name=true
+        elif [[ "$nslookup_line" =~ ^Address: && "$in_name" = true ]]; then
+            ip_nslookup=$(echo "$nslookup_line" | awk '{print $2}')
+            in_name=false
+        fi
+    done <<< "$nslookup_output"
+
+    if [[ "$ip" == "$ip_nslookup" ]]; then
+        echo "Good ip for hostname: $hostname"
+    else
+        echo "Bogus ip for hostname: $hostname, with ip $ip"
+    fi
+}
+
+
+dns_server="8.8.8.8" 
+
+
+while read line; do
+    ip=$(echo "$line" | awk '{print $1}')
+    hostname=$(echo "$line" | awk '{print $2}')
+    
+
+    validate_ip "$hostname" "$ip" "$dns_server"
+done < /etc/hosts
