@@ -25,3 +25,4 @@ do
 		echo "Bogus ip for hostname: $hostname, with ip $ip"
 	fi
 done < /etc/hosts
+echo "Bulacu Daria"
